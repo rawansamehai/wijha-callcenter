@@ -555,26 +555,37 @@ export default function ClientsPage() {
           </div>
           <p className="text-xs text-muted-foreground mb-4">Select the column from your file that matches each system field.</p>
 
-          {[...phoneFields, ...otherFields].map(field => (
-            <div key={field} className="flex items-center justify-between gap-4">
-              <span className="text-sm font-medium text-slate-700 w-1/2">
-                {field} {field === "Primary Phone" && <span className="text-red-500">*</span>}
-              </span>
+          {[...phoneFields, ...otherFields].map(field => {
+            // Collect all column letters already used by OTHER fields
+            const usedByOthers = new Set(
+              Object.entries(columnMapping)
+                .filter(([f, v]) => f !== field && v)
+                .map(([, v]) => v)
+            );
 
-              <select
-                className="flex h-10 w-1/2 rounded-md border border-input bg-background px-3 py-2 text-sm font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 cursor-pointer"
-                value={columnMapping[field] || ""}
-                onChange={(e) => {
-                  setColumnMapping(prev => ({...prev, [field]: e.target.value}));
-                }}
-              >
-                <option value="">— Select column —</option>
-                {excelHeaders.map(h => (
-                  <option key={h.letter} value={h.letter}>{h.label} ({h.letter})</option>
-                ))}
-              </select>
-            </div>
-          ))}
+            return (
+              <div key={field} className="flex items-center justify-between gap-4">
+                <span className="text-sm font-medium text-slate-700 w-1/2">
+                  {field} {field === "Primary Phone" && <span className="text-red-500">*</span>}
+                </span>
+
+                <select
+                  className="flex h-10 w-1/2 rounded-md border border-input bg-background px-3 py-2 text-sm font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 cursor-pointer"
+                  value={columnMapping[field] || ""}
+                  onChange={(e) => {
+                    setColumnMapping(prev => ({...prev, [field]: e.target.value}));
+                  }}
+                >
+                  <option value="">— Select column —</option>
+                  {excelHeaders
+                    .filter(h => !usedByOthers.has(h.letter))
+                    .map(h => (
+                      <option key={h.letter} value={h.letter}>{h.label} ({h.letter})</option>
+                    ))}
+                </select>
+              </div>
+            );
+          })}
 
           {mode === "assign" && (
             <div className="flex items-center justify-between gap-4 opacity-60 pt-2">
